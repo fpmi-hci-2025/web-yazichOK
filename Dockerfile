@@ -13,20 +13,17 @@ RUN flutter pub get
 # Копируем исходный код
 COPY . .
 
-# Переходим в папку web проекта
-WORKDIR /app/web
-
-# Устанавливаем зависимости для веб-проекта
+# Устанавливаем зависимости
 RUN flutter pub get
 
-# Собираем веб-приложение для продакшена
-RUN flutter build web --release --web-renderer html
+# Собираем веб-приложение для продакшена с правильным base href
+RUN flutter build web --release --base-href /web-yazichOK/
 
 # Используем nginx для хостинга статических файлов
 FROM nginx:alpine
 
 # Копируем собранные файлы в nginx
-COPY --from=build /app/web/build/web /usr/share/nginx/html
+COPY --from=build /app/build/web /usr/share/nginx/html
 
 # Копируем кастомную конфигурацию nginx
 COPY nginx.conf /etc/nginx/nginx.conf
