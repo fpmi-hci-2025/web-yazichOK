@@ -1,32 +1,28 @@
 # Используем официальный образ Flutter для сборки
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем pubspec файлы
 COPY pubspec.yaml pubspec.lock ./
 
-# Устанавливаем зависимости
 RUN flutter pub get
 
-# Копируем исходный код
 COPY . .
 
-# Переходим в папку web проекта
-WORKDIR /app/web
-
-# Устанавливаем зависимости для веб-проекта
 RUN flutter pub get
 
+# Позволяет переопределить base href при сборке (по умолчанию '/')
+ARG BASE_HREF=/
+ENV BASE_HREF=${BASE_HREF}
+
 # Собираем веб-приложение для продакшена
-RUN flutter build web --release --web-renderer html
+RUN flutter build web --release --base-href ${BASE_HREF}
 
 # Используем nginx для хостинга статических файлов
 FROM nginx:alpine
 
 # Копируем собранные файлы в nginx
-COPY --from=build /app/web/build/web /usr/share/nginx/html
+COPY --from=build /app/build/web /usr/share/nginx/html
 
 # Копируем кастомную конфигурацию nginx
 COPY nginx.conf /etc/nginx/nginx.conf
